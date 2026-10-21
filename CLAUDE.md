@@ -13,7 +13,7 @@ Non-goals for v1: wake word, always-on listening, GUI click automation or vision
 
 - OS: Windows 11 (develop and run natively on Windows; use PowerShell, not bash).
 - Hardware: AMD Ryzen 5 4500U (6 cores / 6 threads, Zen 2, AVX2, no NPU, weak Vega iGPU), mini PC, 16 to 32 GB RAM. **CPU-only inference.** Do not assume a GPU.
-- Python 3.12 in a venv at `.venv`.
+- Python 3.12 in a venv at `.venv`, managed with `uv` (`uv sync`, `uv add`, `uv run`).
 - ASR model: NVIDIA **Parakeet TDT 0.6B** (v2 for English, v3 if European languages are needed), ONNX int8, run via `onnx-asr` (fallback: `sherpa-onnx`).
 - Performance budget (measure, do not assume; see Phase 0):
   - Key release to text typed: aim for < 1.5 s for a ~5 s utterance.
@@ -98,15 +98,22 @@ voiceagents/
 ## 6. Commands (PowerShell)
 
 ```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
-pytest
-ruff check . ; ruff format .
-mypy src
-python scripts\bench_asr.py --model nemo-parakeet-tdt-0.6b-v2 --threads 6
-python -m voiceagents          # run the app (console)
-pythonw -m voiceagents         # run without a console window
+uv sync                                   # creates .venv (Python 3.12 via .python-version) and installs deps
+uv run pytest
+uv run ruff check . ; uv run ruff format .
+uv run mypy src
+uv run python scripts\bench_asr.py --model nemo-parakeet-tdt-0.6b-v2 --threads 6
+uv run python -m voiceagents              # run the app (console)
+uv run pythonw -m voiceagents             # run without a console window
+uv add <pkg> ; uv add --dev <pkg>         # dependencies (never pip install; commit pyproject.toml + uv.lock)
+```
+
+Git worktrees: each phase item is developed in an isolated worktree under `.worktrees/` (gitignored), then merged into `main`.
+
+```powershell
+git worktree add .worktrees\<name> -b <name>   # start work; run `uv sync` inside it
+git -C <main checkout> merge --no-ff <name>     # when the item is done and checks pass
+git worktree remove .worktrees\<name> ; git branch -d <name>
 ```
 
 Keep this section current. If a command changes, update it here in the same commit.
@@ -176,7 +183,7 @@ code = "Visual Studio Code"
 Work phase by phase. Do not start a phase until the previous phase's acceptance criteria pass. Tick the boxes as you go.
 
 ### Phase 0 — Scaffold and benchmark
-- [ ] Create repo layout, `pyproject.toml`, venv instructions, `ruff`/`pytest` config.
+- [x] Create repo layout, `pyproject.toml`, venv instructions, `ruff`/`pytest` config.
 - [ ] `scripts/bench_asr.py`: load Parakeet int8, warm up, transcribe 5 s / 15 s / 30 s clips, report load time, latency, real-time factor, peak RAM. Try `threads` 4, 5, 6.
 - [ ] Compare v2 vs v3 (if multilingual is wanted).
 - [ ] Record results in `docs/benchmarks.md` and set the `asr.threads` default.
