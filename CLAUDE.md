@@ -102,7 +102,7 @@ uv sync                                   # creates .venv (Python 3.12 via .pyth
 uv run pytest
 uv run ruff check . ; uv run ruff format .
 uv run mypy src
-uv run python scriptsbench_asr.py --model nemo-parakeet-tdt-0.6b-v2 --threads 6
+uv run python scripts\bench_asr.py --model nemo-parakeet-tdt-0.6b-v2 --threads 6
 uv run python -m voiceagents              # run the app (console)
 uv run pythonw -m voiceagents             # run without a console window
 uv add <pkg> ; uv add --dev <pkg>         # dependencies (never pip install; commit pyproject.toml + uv.lock)
