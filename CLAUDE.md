@@ -184,9 +184,9 @@ Work phase by phase. Do not start a phase until the previous phase's acceptance 
 
 ### Phase 0 — Scaffold and benchmark
 - [x] Create repo layout, `pyproject.toml`, venv instructions, `ruff`/`pytest` config.
-- [ ] `scripts/bench_asr.py`: load Parakeet int8, warm up, transcribe 5 s / 15 s / 30 s clips, report load time, latency, real-time factor, peak RAM. Try `threads` 4, 5, 6.
-- [ ] Compare v2 vs v3 (if multilingual is wanted).
-- [ ] Record results in `docs/benchmarks.md` and set the `asr.threads` default.
+- [x] `scripts/bench_asr.py`: load Parakeet int8, warm up, transcribe 5 s / 15 s / 30 s clips, report load time, latency, real-time factor, peak RAM. Try `threads` 4, 5, 6.
+- [x] Compare v2 vs v3 (if multilingual is wanted). (Dev machine: equivalent speed/RAM.)
+- [ ] Record results in `docs/benchmarks.md` and set the `asr.threads` default. (Dev-machine results recorded; target-CPU run and threads default still pending.)
 
 **Accept:** RTF is measured on the target CPU. If a 5 s utterance takes longer than about 2 s, stop and discuss fallbacks (Moonshine, whisper.cpp small) before continuing.
 
