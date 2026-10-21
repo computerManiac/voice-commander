@@ -1,0 +1,45 @@
+[project]
+name = "voiceagents"
+version = "0.1.0"
+description = "Local hold-to-talk dictation and command agents for Windows 11 (Parakeet TDT, CPU-only)"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy",
+    "onnx-asr[cpu,hub]",
+    "psutil",
+    "rapidfuzz",
+    "sounddevice",
+]
+
+[dependency-groups]
+dev = [
+    "mypy",
+    "pytest",
+    "ruff",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/voiceagents"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not asr'"
+markers = ["asr: needs the ASR model and WAV fixtures (skipped by default; run with -m asr)"]
