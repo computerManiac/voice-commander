@@ -64,9 +64,10 @@ voiceagents/
   config.toml                # user config, committed with safe defaults
   src/voiceagents/
     app.py                   # entry point: wiring, tray, lifecycle
-    config.py                # load/validate config.toml
+    config.py                # AudioConfig/AsrConfig now; full config.toml loading in Phase 2
     core/
-      audio.py               # Recorder: start/stop, pre-roll, resample, VAD gate
+      audio.py               # Recorder: start/stop, pre-roll, resample; read_wav
+      vad.py                 # SpeechDetector: Silero (via onnx-asr) and energy gate
       asr.py                 # ParakeetASR: load, warm_up, transcribe(np.ndarray) -> str
       hotkeys.py             # HotkeyManager: register(name, combo, on_down, on_up)
       feedback.py            # beeps, tray icon state, overlay toast
@@ -92,6 +93,7 @@ voiceagents/
   scripts/
     bench_asr.py             # Phase 0 benchmark
     record_test.py           # mic sanity check
+    make_fixtures.py         # regenerates tests/fixtures/*.wav
   tests/
 ```
 
@@ -103,6 +105,8 @@ uv run pytest
 uv run ruff check . ; uv run ruff format .
 uv run mypy src
 uv run python scripts\bench_asr.py --model nemo-parakeet-tdt-0.6b-v2 --threads 6
+uv run python scripts\record_test.py      # record 5 s and transcribe (--wav FILE, --list-devices)
+uv run pytest -m asr -o addopts=""         # also run tests that load the real models
 uv run python -m voiceagents              # run the app (console)
 uv run pythonw -m voiceagents             # run without a console window
 uv add <pkg> ; uv add --dev <pkg>         # dependencies (never pip install; commit pyproject.toml + uv.lock)
@@ -191,11 +195,11 @@ Work phase by phase. Do not start a phase until the previous phase's acceptance 
 **Accept:** RTF is measured on the target CPU. If a 5 s utterance takes longer than about 2 s, stop and discuss fallbacks (Moonshine, whisper.cpp small) before continuing.
 
 ### Phase 1 — Core audio and ASR
-- [ ] `core/audio.py`: `Recorder.start()/stop() -> np.ndarray`, 16 kHz mono float32, pre-roll buffer, device selection, resample if needed.
-- [ ] `core/asr.py`: `ParakeetASR.load()`, `warm_up()`, `transcribe(audio) -> str`.
-- [ ] VAD gate: if no speech is detected, return an empty string without calling ASR.
-- [ ] `scripts/record_test.py`: record 5 s, print the transcript and timings.
-- [ ] Unit tests with canned WAV fixtures (short, silence, noise).
+- [x] `core/audio.py`: `Recorder.start()/stop() -> np.ndarray`, 16 kHz mono float32, pre-roll buffer, device selection, resample if needed.
+- [x] `core/asr.py`: `ParakeetASR.load()`, `warm_up()`, `transcribe(audio) -> str`.
+- [x] VAD gate: if no speech is detected, return an empty string without calling ASR.
+- [x] `scripts/record_test.py`: record 5 s, print the transcript and timings.
+- [x] Unit tests with canned WAV fixtures (short, silence, noise).
 
 **Accept:** CLI round trip works; silence yields an empty string; clips over `max_duration_s` are truncated or chunked.
 
