@@ -137,3 +137,81 @@ def test_resample_preserves_tone(src: int) -> None:
 def test_resample_attenuates_content_above_new_nyquist() -> None:
     out = resample(tone(1.0, rate=48000, freq=12000), 48000, 16000)
     assert np.abs(out[300:-300]).max() < 0.05
+
+
+class Clock:
+    def __init__(self) -> None:
+        self.now = 1000.0
+
+    def monotonic(self) -> float:
+        return self.now
+
+
+@pytest.fixture
+def clock(monkeypatch: pytest.MonkeyPatch) -> Clock:
+    clock = Clock()
+    monkeypatch.setattr("voiceagents.core.audio.time", clock)
+    return clock
+
+
+def test_stream_that_stops_calling_back_is_unhealthy(clock: Clock) -> None:
+    mic = FakeMic()
+    rec = make(mic)
+    assert not rec.healthy  # not open yet
+    rec.open()
+    assert rec.healthy
+    mic.push(tone(0.1))
+    clock.now += 0.5
+    assert rec.healthy
+    clock.now += 1.0  # device disabled: no more callbacks
+    assert not rec.healthy
+    mic.push(tone(0.1))  # device back
+    assert rec.healthy
+
+
+def test_start_reopens_a_dead_stream_and_refreshes_devices(clock: Clock) -> None:
+    mic = FakeMic()
+    refreshed: list[bool] = []
+    rec = Recorder(
+        AudioConfig(), stream_factory=mic.factory, device_refresher=lambda: refreshed.append(True)
+    )
+    rec.open()
+    dead = mic.stream
+    mic.stream = FakeStream()  # what the factory will hand out next
+    clock.now += 5
+    rec.start()
+    assert dead.closed
+    assert refreshed == [True]
+    assert mic.stream.started
+    assert rec.healthy
+
+
+def test_start_raises_if_the_device_is_still_gone(clock: Clock) -> None:
+    mic = FakeMic()
+    rec = Recorder(AudioConfig(), stream_factory=mic.factory, device_refresher=lambda: None)
+    rec.open()
+    clock.now += 5
+
+    def gone(*args: Any) -> Any:
+        raise OSError("device unavailable")
+
+    rec._stream_factory = gone
+    with pytest.raises(OSError):
+        rec.start()
+    assert not rec.healthy
+    rec._stream_factory = mic.factory  # plugged back in
+    rec.start()
+    assert rec.healthy
+
+
+def test_closing_a_broken_stream_does_not_raise(clock: Clock) -> None:
+    mic = FakeMic()
+
+    def explode() -> None:
+        raise OSError("gone")
+
+    mic.stream.stop = explode  # type: ignore[method-assign]
+    rec = Recorder(AudioConfig(), stream_factory=mic.factory, device_refresher=lambda: None)
+    rec.open()
+    rec.close()
+    assert not rec.healthy
