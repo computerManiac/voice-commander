@@ -64,7 +64,7 @@ voiceagents/
   config.toml                # user config, committed with safe defaults
   src/voiceagents/
     app.py                   # entry point: wiring, tray, lifecycle
-    config.py                # AudioConfig/AsrConfig now; full config.toml loading in Phase 2
+    config.py                # typed settings + load_config() for config.toml
     core/
       audio.py               # Recorder: start/stop, pre-roll, resample; read_wav
       vad.py                 # SpeechDetector: Silero (via onnx-asr) and energy gate
@@ -73,6 +73,7 @@ voiceagents/
       feedback.py            # beeps, tray icon state, overlay toast
       worker.py              # job queue + dispatcher
     agents/
+      echo.py                # placeholder agent (toasts the transcript) until Phases 3 and 4
       dictation.py
       command/
         __init__.py          # CommandAgent
@@ -141,7 +142,12 @@ threads = 5                 # leave one core for the OS/UI; benchmark 5 vs 6
 [hotkeys]
 dictation = "f9"            # hold to talk
 command   = "f10"           # hold to talk
-# Consider a chord (e.g. ctrl+win) later; avoid bare Win combos that open Start.
+debounce_ms = 50            # ignore a press this soon after the same key was released
+# Chords work (e.g. "ctrl+alt+d"). Avoid bare Win combos that open Start.
+
+[feedback]
+beeps = true
+error_flash_s = 3.0         # how long the tray icon stays red after an error
 
 [dictation]
 inject = "sendinput"        # "sendinput" | "paste"
@@ -204,10 +210,10 @@ Work phase by phase. Do not start a phase until the previous phase's acceptance 
 **Accept:** CLI round trip works; silence yields an empty string; clips over `max_duration_s` are truncated or chunked.
 
 ### Phase 2 — Hotkeys, worker, feedback
-- [ ] `core/hotkeys.py`: hold-to-talk with debounce; handles key repeat; two independent bindings.
-- [ ] `core/worker.py`: job queue, single consumer, exception isolation.
-- [ ] `core/feedback.py`: start/stop beeps (`winsound`), tray icon states (idle, recording, processing, error).
-- [ ] `app.py`: startup sequence (load config, start tray, load ASR in the background, register hotkeys).
+- [x] `core/hotkeys.py`: hold-to-talk with debounce; handles key repeat; two independent bindings.
+- [x] `core/worker.py`: job queue, single consumer, exception isolation.
+- [x] `core/feedback.py`: start/stop beeps (`winsound`), tray icon states (idle, recording, processing, error).
+- [x] `app.py`: startup sequence (load config, start tray, load ASR in the background, register hotkeys).
 
 **Accept:** holding F9 or F10 records, releasing enqueues a job, and the tray icon and beeps reflect each state. A deliberate exception in a job does not stop the app.
 
@@ -290,7 +296,7 @@ Work phase by phase. Do not start a phase until the previous phase's acceptance 
 
 ## 14. Open decisions (resolve when reached)
 
-- `keyboard` vs `pynput` for hotkeys (decide in Phase 2 based on reliability with key-up and suppression).
+- ~~`keyboard` vs `pynput` for hotkeys~~ Decided in Phase 2: `keyboard` (key-up works, a blocking hook can swallow the bound key so F10 does not open menu bars; wrapped in `core/hotkeys.py` so it can be swapped).
 - Parakeet v2 (English) vs v3 (multilingual): decide from Phase 0 results and the user's language needs.
 - Local LLM model choice and quantisation for the fallback (benchmark 1 or 2 candidates in Phase 5).
 - Whether to run elevated by default (decide after testing UIPI behaviour in Phase 7).

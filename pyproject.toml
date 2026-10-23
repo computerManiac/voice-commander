@@ -5,9 +5,12 @@ description = "Local hold-to-talk dictation and command agents for Windows 11 (P
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "keyboard>=0.13.5",
     "numpy",
     "onnx-asr[cpu,hub]",
+    "pillow>=13.0.0",
     "psutil",
+    "pystray>=0.19.5",
     "rapidfuzz",
     "sounddevice",
 ]
