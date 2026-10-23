@@ -42,15 +42,49 @@ model includes the Hugging Face download and cold disk cache; later loads are ab
 - Both transcribe the sample correctly ("Open Chrome and visit youtube.com. ..."), with casing and
   punctuation.
 
-## Run 2: target machine (TODO)
+## Run 2: target machine (Ryzen 5 4500U)
 
-Not yet measured. Run on the Ryzen 5 4500U mini PC and paste the output here:
+Ryzen 5 4500U (6C/6T, Zen 2), 15.4 GB RAM, Windows 11. This is the acceptance measurement. Same
+script, TTS audio, 5 timed runs per clip. Reproduce with:
 
 ```powershell
-uv run python scripts\bench_asr.py --model nemo-parakeet-tdt-0.6b-v2 --threads 4 5 6 --runs 5
-uv run python scripts\bench_asr.py --model nemo-parakeet-tdt-0.6b-v3 --threads 4 5 6 --runs 5
+uv run python scriptsench_asr.py --model nemo-parakeet-tdt-0.6b-v2 --threads 4 5 6 --runs 5
+uv run python scriptsench_asr.py --model nemo-parakeet-tdt-0.6b-v3 --threads 4 5 6 --runs 5
 ```
 
-Then set the `asr.threads` default from the result. Pass `--audio your.wav` (16 kHz, 16-bit) to use
-real speech instead of TTS. If the 5 s clip takes longer than about 2 s there, stop and discuss
-fallbacks (Moonshine, whisper.cpp small) per CLAUDE.md.
+### nemo-parakeet-tdt-0.6b-v2 (int8)
+
+| threads | load s | warm-up s | peak RAM MB | 5 s clip | 15 s clip | 30 s clip |
+|---|---|---|---|---|---|---|
+| 4 | 49.78* | 0.24 | 1222 | 0.31 s / 0.062 | 0.94 s / 0.063 | 1.96 s / 0.065 |
+| 5 | 5.34 | 0.31 | 1205 | 0.38 s / 0.077 | 0.96 s / 0.064 | 1.82 s / 0.061 |
+| 6 | 5.48 | 0.40 | 1209 | 0.35 s / 0.070 | 0.85 s / 0.056 | 1.79 s / 0.060 |
+
+### nemo-parakeet-tdt-0.6b-v3 (int8, multilingual)
+
+| threads | load s | warm-up s | peak RAM MB | 5 s clip | 15 s clip | 30 s clip |
+|---|---|---|---|---|---|---|
+| 4 | 53.20* | 0.20 | 1232 | 0.33 s / 0.066 | 0.90 s / 0.060 | 1.96 s / 0.065 |
+| 5 | 5.34 | 0.27 | 1215 | 0.33 s / 0.066 | 0.85 s / 0.056 | 1.81 s / 0.060 |
+| 6 | 5.19 | 0.27 | 1214 | 0.34 s / 0.068 | 0.81 s / 0.054 | 1.73 s / 0.058 |
+
+*First run of each model includes the Hugging Face download and cold disk cache.
+
+### Observations
+
+- RTF is about 0.06 to 0.07, roughly twice the dev machine. A 5 s utterance takes about 0.35 s,
+  far under the 2 s stop threshold and the 1.5 s key-release budget (about 4x headroom for VAD,
+  typing and overhead).
+- A 30 s clip takes about 1.8 s, so `max_duration_s = 45` is fine (about 2.7 s worst case).
+- Thread count 4, 5 and 6 differ by less than run-to-run noise. 6 is marginally fastest at 15 s and
+  30 s, but uses every core while the UI, audio callback and hotkey threads also need time.
+- v2 and v3 are equivalent in speed and RAM (about 1.2 GB peak). Load is about 5 s once cached.
+- Scope: TTS audio, not a real microphone. Speed is representative; accuracy is not. Re-measure
+  end-to-end key-release latency in Phase 7.
+
+### Decision
+
+- `asr.threads = 5` stays the default (leaves one core free; no measurable cost versus 6).
+- Parakeet is fast enough on the target CPU, so no fallback (Moonshine, whisper.cpp) is needed.
+- v2 vs v3: still a language-need decision. v2 is the default; switch `asr.model` to
+  `nemo-parakeet-tdt-0.6b-v3` for European languages at no speed or memory cost.
