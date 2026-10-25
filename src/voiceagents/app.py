@@ -26,7 +26,12 @@ from voiceagents.platform.winapi import WindowInfo, foreground_window
 log = logging.getLogger(__name__)
 
 
+MIC_ERROR = "Can't access the microphone. Check that it is connected and enabled."
+
+
 class MicRecorder(Protocol):
+    @property
+    def healthy(self) -> bool: ...
     def open(self) -> None: ...
     def close(self) -> None: ...
     def start(self) -> None: ...
@@ -153,7 +158,7 @@ class VoiceApp:
             self._recorder.start()
         except Exception:
             log.exception("could not start recording")
-            self._flash_error("Could not open the microphone.")
+            self._flash_error(MIC_ERROR)
             return
         with self._lock:
             self._recording = (mode, window)
@@ -173,6 +178,10 @@ class VoiceApp:
         except Exception:
             log.exception("could not stop recording")
             self._flash_error("Recording failed.")
+            return
+        if audio.size == 0 and not self._recorder.healthy:
+            log.error("%s: the microphone stopped delivering audio", mode)
+            self._flash_error(MIC_ERROR)
             return
         if audio.size == 0:
             log.info("%s: recording too short, ignored", mode)

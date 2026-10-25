@@ -75,6 +75,7 @@ class FakeRecorder:
         self.opened = False
         self.closed = False
         self.recording = False
+        self.healthy = True
 
     def open(self) -> None:
         self.opened = True
@@ -261,6 +262,18 @@ def test_microphone_failure_flashes_an_error_and_does_not_get_stuck(rig: Rig) ->
     rig.recorder.fail_start = False
     rig.backend.tap("f9")
     wait_for(lambda: len(rig.agent.jobs) == 1)
+
+
+def test_dead_microphone_stream_is_reported_instead_of_ignored_as_too_short(rig: Rig) -> None:
+    rig.start()
+    rig.recorder.audio = np.zeros(0, dtype=np.float32)
+    rig.recorder.healthy = False  # the device was disabled: no audio arrived
+    rig.backend.tap("f9")
+    wait_for(lambda: any("microphone" in t for t in rig.tray.toasts))
+    assert State.ERROR in rig.tray.states
+    assert Cue.ERROR in rig.beeper.cues
+    assert rig.agent.jobs == []
+    wait_for(lambda: rig.feedback.state is State.IDLE)
 
 
 def test_model_load_failure_is_reported_and_hotkeys_say_so(rig: Rig) -> None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 import wave
 from collections import deque
 from collections.abc import Callable
@@ -82,16 +83,36 @@ def resolve_device(device: str) -> str | int | None:
     return int(device) if device.isdigit() else device
 
 
+def refresh_devices() -> None:
+    """Make PortAudio re-scan devices; it only does so on re-initialisation (no streams open)."""
+    import sounddevice as sd
+
+    sd._terminate()
+    sd._initialize()
+
+
 class Recorder:
     """Keeps the mic open, remembers the last `preroll_ms`, and captures between start/stop.
 
     The stream stays open so speech just before the key press is not lost. The callback only
     copies the block into a list; resampling and trimming happen in `stop()`.
+
+    If the device disappears (unplugged or disabled) the stream stays "open" but stops calling
+    back. `healthy` notices that, and `start()` then reopens the stream, raising if it cannot.
     """
 
-    def __init__(self, config: AudioConfig, stream_factory: StreamFactory = open_input_stream):
+    STALE_S = 1.0  # a live stream calls back every few tens of ms
+
+    def __init__(
+        self,
+        config: AudioConfig,
+        stream_factory: StreamFactory = open_input_stream,
+        device_refresher: Callable[[], None] = refresh_devices,
+    ):
         self._config = config
         self._stream_factory = stream_factory
+        self._device_refresher = device_refresher
+        self._last_block = 0.0  # monotonic time of the latest callback (or of open())
         self._stream: InputStream | None = None
         self._rate = config.sample_rate
         self._lock = threading.Lock()
@@ -107,21 +128,37 @@ class Recorder:
             return
         device = resolve_device(self._config.device)
         stream, self._rate = self._stream_factory(device, self._config.sample_rate, self._callback)
+        self._last_block = time.monotonic()
         stream.start()
         self._stream = stream
+
+    @property
+    def healthy(self) -> bool:
+        """True if the stream is open and has delivered audio recently."""
+        return self._stream is not None and time.monotonic() - self._last_block < self.STALE_S
 
     def close(self) -> None:
         stream, self._stream = self._stream, None
         if stream is not None:
-            stream.stop()
-            stream.close()
+            try:
+                stream.stop()
+                stream.close()
+            except Exception:  # a stream whose device vanished can fail to stop cleanly
+                log.debug("error closing the audio stream", exc_info=True)
         with self._lock:
             self._recording = False
             self._preroll.clear()
             self._preroll_samples = 0
 
     def start(self) -> None:
-        """Begin capturing, seeded with the pre-roll. Opens the stream if needed."""
+        """Begin capturing, seeded with the pre-roll. Opens (or reopens a dead) stream."""
+        if self._stream is not None and not self.healthy:
+            log.warning("no audio from the microphone for %.1f s, reopening", self.STALE_S)
+            self.close()
+            try:
+                self._device_refresher()
+            except Exception:
+                log.debug("device refresh failed", exc_info=True)
         self.open()
         with self._lock:
             self._chunks = list(self._preroll)
@@ -145,12 +182,13 @@ class Recorder:
         return resample(audio, self._rate, self._config.sample_rate)
 
     def _callback(
-        self, indata: npt.NDArray[np.float32], frames: int, time: Any, status: Any
+        self, indata: npt.NDArray[np.float32], frames: int, time_info: Any, status: Any
     ) -> None:
         if status:
             log.debug("audio status: %s", status)
         block = indata[:, 0].copy()
         with self._lock:
+            self._last_block = time.monotonic()
             if self._recording:
                 room = int(self._config.max_duration_s * self._rate) - self._recorded
                 if room < block.size:

@@ -28,5 +28,5 @@ Run `uv run python -m voiceagents -v` from the repo root in PowerShell (logs als
 - [x] With `beeps = true`, the start beep does not show up as stray words in the transcript (if it does, set `beeps = false`).
 - [x] Hold F9, then press F10 as well: the F10 press is ignored; only the dictation job runs.
 - [x] Set `dictation = "ctrl+alt+d"` in `config.toml`: the chord works and bare `d` still types normally.
-- [ ] Unplug or disable the microphone, press F9: red icon and a "microphone" toast, and the app keeps running. Plug it back in: F9 works again.
+- [ ] Disable the microphone (Settings, Device Manager, or unplug it), press F9 and hold for a second: red icon, a "Can't access the microphone" toast and a low beep, and the app keeps running. Re-enable it: F9 works again without restarting.
 - [x] Tray menu, Quit: the icon disappears and the process exits.
