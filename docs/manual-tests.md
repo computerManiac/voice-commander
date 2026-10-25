@@ -19,14 +19,14 @@ Run from the repo root in PowerShell.
 
 Run `uv run python -m voiceagents -v` from the repo root in PowerShell (logs also go to `%LOCALAPPDATA%\voiceagents\logs`).
 
-- [ ] A grey tray icon appears at once; after the model loads it turns green and a "Ready" toast shows.
-- [ ] Press F9 before it turns green: a "Still loading" toast, no recording, no beeps.
+- [x] A grey tray icon appears at once; after the model loads it turns green and a "Ready" toast shows.
+- [x] Press F9 before it turns green: a "Still loading" toast, no recording, no beeps.
 - [ ] Hold F9 and speak: the icon turns red with a high beep; on release a lower beep, amber while working, then green and a toast `dictation: <your words>`.
-- [ ] Same with F10: the toast starts with `command:`.
-- [ ] Hold F9 and stay silent: "No speech detected" toast. A quick tap (under 0.3 s) does nothing.
-- [ ] Holding F10 in Chrome, Notepad and Explorer does not open a menu bar or move focus.
-- [ ] With `beeps = true`, the start beep does not show up as stray words in the transcript (if it does, set `beeps = false`).
-- [ ] Hold F9, then press F10 as well: the F10 press is ignored; only the dictation job runs.
-- [ ] Set `dictation = "ctrl+alt+d"` in `config.toml`: the chord works and bare `d` still types normally.
+- [x] Same with F10: the toast starts with `command:`.
+- [x] Hold F9 and stay silent: "No speech detected" toast. A quick tap (under 0.3 s) does nothing.
+- [x] Holding F10 in Chrome, Notepad and Explorer does not open a menu bar or move focus.
+- [x] With `beeps = true`, the start beep does not show up as stray words in the transcript (if it does, set `beeps = false`).
+- [x] Hold F9, then press F10 as well: the F10 press is ignored; only the dictation job runs.
+- [x] Set `dictation = "ctrl+alt+d"` in `config.toml`: the chord works and bare `d` still types normally.
 - [ ] Unplug or disable the microphone, press F9: red icon and a "microphone" toast, and the app keeps running. Plug it back in: F9 works again.
-- [ ] Tray menu, Quit: the icon disappears and the process exits.
+- [x] Tray menu, Quit: the icon disappears and the process exits.

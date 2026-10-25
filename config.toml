@@ -12,7 +12,7 @@ quantization = "int8"
 threads = 5                 # leave one core for the OS/UI
 
 [hotkeys]
-dictation = "f9"            # hold to talk
+dictation = "ctrl+alt+d"            # hold to talk
 command   = "f10"           # hold to talk
 debounce_ms = 50
 # Chords work too, e.g. "ctrl+alt+d". Avoid bare Win combos that open Start.
