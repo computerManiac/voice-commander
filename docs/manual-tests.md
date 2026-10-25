@@ -20,13 +20,13 @@ Run from the repo root in PowerShell.
 Run `uv run python -m voiceagents -v` from the repo root in PowerShell (logs also go to `%LOCALAPPDATA%\voiceagents\logs`).
 
 - [x] A grey tray icon appears at once; after the model loads it turns green and a "Ready" toast shows.
-- [x] Press F9 before it turns green: a "Still loading" toast, no recording, no beeps.
-- [ ] Hold F9 and speak: the icon turns red with a high beep; on release a lower beep, amber while working, then green and a toast `dictation: <your words>`.
+- [x] Press Ctrl+Alt+D before it turns green: a "Still loading" toast, no recording, no beeps.
+- [ ] Hold Ctrl+Alt+D and speak: the icon turns red with a high beep; on release a lower beep, amber while working, then green and a toast `dictation: <your words>`.
 - [x] Same with F10: the toast starts with `command:`.
-- [x] Hold F9 and stay silent: "No speech detected" toast. A quick tap (under 0.3 s) does nothing.
+- [x] Hold Ctrl+Alt+D and stay silent: "No speech detected" toast. A quick tap (under 0.3 s) does nothing.
 - [x] Holding F10 in Chrome, Notepad and Explorer does not open a menu bar or move focus.
 - [x] With `beeps = true`, the start beep does not show up as stray words in the transcript (if it does, set `beeps = false`).
-- [x] Hold F9, then press F10 as well: the F10 press is ignored; only the dictation job runs.
-- [x] Set `dictation = "ctrl+alt+d"` in `config.toml`: the chord works and bare `d` still types normally.
-- [ ] Disable the microphone (Settings, Device Manager, or unplug it), press F9 and hold for a second: red icon, a "Can't access the microphone" toast and a low beep, and the app keeps running. Re-enable it: F9 works again without restarting.
+- [x] Hold Ctrl+Alt+D, then press F10 as well: the F10 press is ignored; only the dictation job runs.
+- [x] The default dictation chord Ctrl+Alt+D works, and bare `d` still types normally. Changing `dictation` in `config.toml` (e.g. to `f9`) takes effect on restart.
+- [ ] Disable the microphone (Settings, Device Manager, or unplug it), hold Ctrl+Alt+D for a second: red icon, a "Can't access the microphone" toast and a low beep, and the app keeps running. Re-enable it: dictation works again without restarting.
 - [x] Tray menu, Quit: the icon disappears and the process exits.

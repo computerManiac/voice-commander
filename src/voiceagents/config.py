@@ -31,7 +31,7 @@ class AsrConfig:
 
 @dataclass(frozen=True)
 class HotkeysConfig:
-    dictation: str = "f9"  # hold to talk
+    dictation: str = "ctrl+alt+d"  # hold to talk
     command: str = "f10"  # hold to talk
     debounce_ms: int = 50  # ignore a press this soon after the same key was released
 

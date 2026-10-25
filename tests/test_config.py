@@ -26,9 +26,9 @@ def test_committed_config_matches_the_defaults() -> None:
 
 def test_partial_file_overrides_only_what_it_names(tmp_path: Path) -> None:
     config = load_config(
-        write(tmp_path, '[hotkeys]\ndictation = "ctrl+alt+d"\n[command.local_llm]\ntimeout_s = 5\n')
+        write(tmp_path, '[hotkeys]\ndictation = "f8"\n[command.local_llm]\ntimeout_s = 5\n')
     )
-    assert config.hotkeys.dictation == "ctrl+alt+d"
+    assert config.hotkeys.dictation == "f8"
     assert config.hotkeys.command == "f10"
     assert config.command.local_llm.timeout_s == 5.0
     assert config.audio == Config().audio

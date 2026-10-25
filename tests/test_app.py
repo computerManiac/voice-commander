@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from voiceagents.app import VoiceApp, build_parser
-from voiceagents.config import Config, FeedbackConfig
+from voiceagents.config import Config, FeedbackConfig, HotkeysConfig
 from voiceagents.core.audio import Audio
 from voiceagents.core.feedback import Cue, Feedback, State
 from voiceagents.core.hotkeys import HotkeyManager, KeyHandler
@@ -131,7 +131,9 @@ class Rig:
         self.asr = FakeASR()
         self.agent = RecordingAgent()
         self.feedback = Feedback(self.tray, self.beeper)
-        config = Config(feedback=FeedbackConfig(error_flash_s=0.05))
+        config = Config(
+            hotkeys=HotkeysConfig(dictation="f9"), feedback=FeedbackConfig(error_flash_s=0.05)
+        )
         self.app = VoiceApp(
             config,
             self.recorder,

@@ -140,7 +140,7 @@ quantization = "int8"
 threads = 5                 # leave one core for the OS/UI; benchmark 5 vs 6
 
 [hotkeys]
-dictation = "f9"            # hold to talk
+dictation = "ctrl+alt+d"   # hold to talk
 command   = "f10"           # hold to talk
 debounce_ms = 50            # ignore a press this soon after the same key was released
 # Chords work (e.g. "ctrl+alt+d"). Avoid bare Win combos that open Start.
@@ -215,7 +215,7 @@ Work phase by phase. Do not start a phase until the previous phase's acceptance 
 - [x] `core/feedback.py`: start/stop beeps (`winsound`), tray icon states (idle, recording, processing, error).
 - [x] `app.py`: startup sequence (load config, start tray, load ASR in the background, register hotkeys).
 
-**Accept:** holding F9 or F10 records, releasing enqueues a job, and the tray icon and beeps reflect each state. A deliberate exception in a job does not stop the app.
+**Accept:** holding the dictation (Ctrl+Alt+D) or command (F10) hotkey records, releasing enqueues a job, and the tray icon and beeps reflect each state. A deliberate exception in a job does not stop the app.
 
 ### Phase 3 — Dictation agent
 - [ ] `platform/injector.py`: `SendInput` Unicode typing (handle surrogate pairs, newlines as Enter).
